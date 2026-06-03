@@ -1,0 +1,75 @@
+# ================================================================
+# GreenShop CI Pipeline — Avtomatik Keyfiyyət Yoxlaması
+# ================================================================
+#
+# NƏ EDİR:
+#   Hər dəfə kod GitHub-a push ediləndə və ya Pull Request açılanda
+#   bu pipeline avtomatik işə düşür. 3 şey yoxlayır:
+#   1. Lint  — Kod yazılış qaydalarına uyğundurmu?
+#   2. Build — Kod uğurla compile olurmu?
+#   3. Type  — TypeScript tipləri düzgündürmü?
+#
+# NİYƏ LAZIMDIR:
+#   - Xətalı kod "main" budağına düşə bilməz
+#   - Pull Request-lərdə avtomatik yoxlama olur
+#   - Komanda üzvlərinin kodu əl ilə yoxlamağa ehtiyacı azalır
+#   - Production-a sınıq kod deploy olmasının qarşısını alır
+#
+# NECƏ İŞLƏYİR:
+#   Developer → Git Push → GitHub Actions (Bu fayl) → Lint+Build+Type Check
+#                                                          ↓
+#                                                    ✅ Keçdi / ❌ Kəsildi
+# ================================================================
+
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, staging, develop]
+  pull_request:
+    branches: [main, staging]
+
+# Eyni branch-da yeni push gəlsə köhnə CI-ı dayandır (resurs qənaəti)
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Lint + Build + Type Check ───────────────────────────────────
+  quality:
+    name: "Keyfiyyət Yoxlaması"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # 1. Kodu çəkmək (checkout)
+      - name: "📥 Kodu yüklə"
+        uses: actions/checkout@v4
+
+      # 2. Node.js qurmaq
+      - name: "⚙️ Node.js 20 qur"
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      # 3. Paketləri yükləmək (npm ci = clean install — daha təhlükəsiz)
+      - name: "📦 Paketləri yüklə"
+        run: npm ci
+
+      # 4. ESLint — Kod qaydalarını yoxla
+      - name: "🔍 Lint yoxlaması"
+        run: npm run lint
+
+      # 5. TypeScript type check — Tip xətaları
+      - name: "🔎 TypeScript yoxlaması"
+        run: npx tsc --noEmit
+
+      # 6. Production build — Hər şey düzgün compile olurmu?
+      - name: "🏗️ Production Build"
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

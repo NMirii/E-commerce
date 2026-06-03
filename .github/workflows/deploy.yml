@@ -1,0 +1,77 @@
+# ================================================================
+# GreenShop Deploy Pipeline — Avtomatik Canlıya Buraxma
+# ================================================================
+#
+# NƏ EDİR:
+#   "main" budağına merge olanda avtomatik Production deploy edir.
+#   "staging" budağına push olanda Preview deploy edir.
+#
+# NİYƏ LAZIMDIR:
+#   - Əl ilə deploy etmək lazım deyil
+#   - Hər merge avtomatik canlıya gedir
+#   - Staging mühitdə test etmək imkanı var
+#   - Rollback (geri qaytarma) asandır
+#
+# NECƏ QURMALI:
+#   1. Vercel.com → New Project → GitHub repo-nuzu qoşun
+#   2. Vercel → Settings → Git → "main" = Production branch
+#   3. GitHub → Settings → Secrets → Aşağıdakı secret-ləri əlavə edin:
+#      - VERCEL_TOKEN (Vercel → Settings → Tokens → Create)
+#      - VERCEL_ORG_ID (Vercel → Settings → General → ID)
+#      - VERCEL_PROJECT_ID (Vercel → Project → Settings → General → Project ID)
+# ================================================================
+
+name: Deploy
+
+on:
+  push:
+    branches: [main, staging]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false  # Deploy-lar ləğv olunmamalı
+
+jobs:
+  deploy:
+    name: "🚀 Deploy"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: "📥 Kodu yüklə"
+        uses: actions/checkout@v4
+
+      - name: "⚙️ Node.js 20 qur"
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: "📦 Paketləri yüklə"
+        run: npm ci
+
+      # Vercel CLI ilə deploy
+      - name: "🔧 Vercel CLI qur"
+        run: npm install -g vercel
+
+      # Staging deploy (Preview)
+      - name: "🔬 Staging Deploy"
+        if: github.ref == 'refs/heads/staging'
+        run: |
+          vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+          vercel build --token=${{ secrets.VERCEL_TOKEN }}
+          vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      # Production deploy
+      - name: "🚀 Production Deploy"
+        if: github.ref == 'refs/heads/main'
+        run: |
+          vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+          vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

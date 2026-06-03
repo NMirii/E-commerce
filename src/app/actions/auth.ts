@@ -11,17 +11,22 @@ export async function signIn(
   _prevState: AuthState,
   formData: FormData
 ): Promise<AuthState> {
+  let isSuccessful = false;
   try {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const session = await authenticateUser(email, password);
     const token = await signAccessToken(session);
     await setAuthCookie(token);
-    redirect("/account");
+    isSuccessful = true;
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : "Giriş uğursuz oldu",
     };
+  }
+
+  if (isSuccessful) {
+    redirect("/account");
   }
 }
 
@@ -29,6 +34,7 @@ export async function signUp(
   _prevState: AuthState,
   formData: FormData
 ): Promise<AuthState> {
+  let isSuccessful = false;
   try {
     const session = await registerUser({
       email: formData.get("email") as string,
@@ -37,11 +43,15 @@ export async function signUp(
     });
     const token = await signAccessToken(session);
     await setAuthCookie(token);
-    redirect("/account");
+    isSuccessful = true;
   } catch (error) {
     return {
       error: error instanceof Error ? error.message : "Qeydiyyat uğursuz oldu",
     };
+  }
+
+  if (isSuccessful) {
+    redirect("/account");
   }
 }
 

@@ -5,6 +5,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { z } from "zod";
 import { updateTag } from "next/cache";
 import { zodFirstMessage } from "@/lib/zod-errors";
+import { captureError } from "@/lib/monitoring";
 
 const productSchema = z.object({
   id: z.string().uuid().optional(),
@@ -100,6 +101,11 @@ export async function saveProductAction(prevState: ProductActionState, formData:
     if (err instanceof z.ZodError) {
       return { error: zodFirstMessage(err) };
     }
+    captureError(err, {
+      action: "saveProductAction",
+      severity: "medium",
+      metadata: { source: "admin_product" },
+    });
     return {
       error: err instanceof Error ? err.message : "Xəta baş verdi",
     };

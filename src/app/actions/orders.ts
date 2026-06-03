@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import { zodFirstMessage } from "@/lib/zod-errors";
 import { getCart } from "@/app/actions/cart";
 import { resolveCartProduct } from "@/lib/cart-utils";
+import { captureError } from "@/lib/monitoring";
 
 const orderStatusSchema = z.enum([
   "pending",
@@ -135,6 +136,12 @@ export async function placeOrderAction(
     if (err && typeof err === "object" && "digest" in err) {
       throw err;
     }
+    // Xətanı monitoring-ə göndər (Sentry qoşulanda avtomatik göndəriləcək)
+    captureError(err, {
+      action: "placeOrderAction",
+      severity: "high",
+      metadata: { source: "checkout" },
+    });
     return {
       error: err instanceof Error ? err.message : "Sifariş yaradıla bilmədi",
     };
