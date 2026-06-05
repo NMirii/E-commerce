@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 /**
  * HTTP Təhlükəsizlik Başlıqları
@@ -97,4 +98,13 @@ const nextConfig: NextConfig = {
   poweredByHeader: false, // "X-Powered-By: Next.js" başlığını gizlədir (fingerprinting)
 };
 
-export default nextConfig;
+const sentryConfig = withSentryConfig(
+  nextConfig,
+  {
+    silent: true,
+    org: "greenshop",
+    project: "greenshop-ecommerce",
+  }
+);
+
+export default sentryConfig;

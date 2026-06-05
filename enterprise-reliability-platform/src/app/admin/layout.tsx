@@ -19,6 +19,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin/order" className="sidebar-link">
             📦 Sifarişlər
           </Link>
+          <Link href="/admin/reliability" className="sidebar-link">
+            🛠️ Sistem Dayanıqlığı
+          </Link>
           <Link href="/" className="sidebar-link mt-auto hover:text-emerald-400">
             ← Mağazaya qayıt
           </Link>
