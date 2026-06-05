@@ -9,6 +9,20 @@ import React, {
 } from "react";
 import type { AuthUser, UserProfile } from "@/lib/auth/types";
 
+async function fetchAuthSession(): Promise<{
+  user: AuthUser | null;
+  profile: UserProfile | null;
+}> {
+  try {
+    const res = await fetch("/api/auth/me", { credentials: "include" });
+    if (!res.ok) return { user: null, profile: null };
+    const data = await res.json();
+    return { user: data.user ?? null, profile: data.profile ?? null };
+  } catch {
+    return { user: null, profile: null };
+  }
+}
+
 interface AuthContextType {
   user: AuthUser | null;
   profile: UserProfile | null;
@@ -29,25 +43,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    try {
-      const res = await fetch("/api/auth/me", { credentials: "include" });
-      if (!res.ok) {
-        setUser(null);
-        setProfile(null);
-        return;
-      }
-      const data = await res.json();
-      setUser(data.user ?? null);
-      setProfile(data.profile ?? null);
-    } catch {
-      setUser(null);
-      setProfile(null);
-    }
+    const session = await fetchAuthSession();
+    setUser(session.user);
+    setProfile(session.profile);
   }, []);
 
   useEffect(() => {
-    refresh().finally(() => setLoading(false));
-  }, [refresh]);
+    let cancelled = false;
+
+    fetchAuthSession()
+      .then((session) => {
+        if (cancelled) return;
+        setUser(session.user);
+        setProfile(session.profile);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, profile, loading, refresh }}>

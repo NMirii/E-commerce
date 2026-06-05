@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSessionFromRequest, requireRole } from "./session";
+import { getSessionFromRequest } from "./session";
 import type { SessionUser, UserRole } from "./types";
 
 export async function getApiSession(

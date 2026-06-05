@@ -66,10 +66,11 @@ jobs:
         run: npx tsc --noEmit
 
       # 6. Production build — Hər şey düzgün compile olurmu?
+      # CI-da real secret lazım deyil; build yalnız compile yoxlamasıdır.
       - name: "🏗️ Production Build"
         run: npm run build
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key-min-10
+          JWT_SECRET: ci-build-only-jwt-secret-min-32-chars
+          SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-role-key
