@@ -1,99 +1,91 @@
-# enterprise-deployment-platform
+# Welcome to 06 Deployment
+***
 
-GreenShop — Next.js 16 enterprise e-commerce platforması (Supabase, JWT auth, admin panel, CI/CD, production security headers).
+## Task
 
-## Platform seçimi
+Deploy a production-ready enterprise e-commerce platform (`enterprise-deployment-platform` / GreenShop) with industry-grade reliability, security, and automation.
 
-**E-commerce** — inventar idarəetməsi, səbət/checkout, ödəniş webhook stub, audit log, rate limiting və production deployment (Vercel + GitHub Actions).
+The problem is moving a full-stack Next.js e-commerce application from local development to a secure, monitored, multi-environment production setup. The platform must handle customer data, payments, inventory, and admin operations while meeting real-world deployment standards.
 
-## Texnologiyalar
+The challenge is environment management (public vs server-only secrets across dev, staging, and production), CI/CD reliability (lint, type-check, and build on every push), safe promotion from staging to production with rollback options, e-commerce compliance (payment security, audit trails, security headers), and global performance (optimized builds, Web Vitals, edge deployment on Vercel).
 
-- **Frontend/Backend:** Next.js 16, React 19, TypeScript
-- **Database/Auth:** Supabase (PostgreSQL + RLS)
-- **CI/CD:** GitHub Actions (lint, typecheck, build, Vercel deploy)
-- **Hosting:** Vercel (edge, preview + production)
-- **Monitoring:** Structured logging + Web Vitals (`src/lib/monitoring.ts`)
+## Description
 
-## Quraşdırma
+The platform is built with Next.js 16, React 19, TypeScript, and Supabase. It includes a customer storefront (catalog, cart, checkout), admin dashboard (products, orders, inventory alerts), JWT authentication, REST API routes, and Server Actions.
 
-### Tələblər
+Production configuration uses centralized env validation with Zod (`src/lib/env.ts`), security headers in `next.config.ts` (CSP, HSTS, X-Frame-Options), and structured error logging with Web Vitals hooks (`src/lib/monitoring.ts`).
 
-- Node.js 20+
-- Supabase hesabı
+CI/CD is handled by GitHub Actions: `ci.yml` runs lint, TypeScript check, and production build on every push/PR; `deploy.yml` deploys to Vercel preview on `staging` and production on `main`.
 
-### Lokal inkişaf
+Multi-environment flow: local development → `staging` branch (preview) → `main` branch (production). CI uses placeholder env vars so builds pass without exposing real secrets.
+
+E-commerce security includes JWT httpOnly cookies, role-based admin access, rate limiting, audit logs, payment webhook stub, and Supabase RLS with server-only keys.
+
+See `DEPLOYMENT-INSIGHTS.md` for detailed deployment notes.
+
+## Installation
+
+Requirements: Node.js 20+, npm, Supabase account.
 
 ```bash
+git clone https://github.com/NMirii/E-commerce.git
+cd E-commerce
 npm install
 cp .env.example .env.local
-# .env.local dəyərlərini doldurun
+```
+
+Fill in `.env.local`:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+JWT_SECRET=your-secret-minimum-32-characters
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+Run `supabase/schema.sql` in the Supabase SQL Editor.
+
+For production deploy on Vercel: connect the GitHub repo, add the same environment variables in project settings, and set GitHub Actions secrets (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`).
+
+## Usage
+
+Local development:
+
+```bash
 npm run dev
 ```
 
-Supabase SQL: `supabase/schema.sql` (ətraflı: `supabase/SETUP-AZ.md`).
+Open [http://localhost:3000](http://localhost:3000)
 
-### Skriptlər
+Production build and run:
 
-| Əmr | Təsvir |
-|-----|--------|
-| `npm run dev` | İnkişaf serveri |
-| `npm run build` | Production build |
-| `npm run start` | Production server |
-| `npm run lint` | ESLint |
-
-## Arxitektura
-
-```
-src/app/(store)/     — Mağaza (kataloq, səbət, checkout)
-src/app/admin/       — Admin panel
-src/app/api/         — REST API
-src/app/actions/     — Server Actions
-src/proxy.ts         — Route qorunması (admin, checkout, account)
-src/lib/env.ts       — Env validasiya (Zod)
-src/lib/monitoring.ts — Error + Web Vitals logging
-.github/workflows/   — CI və Deploy pipeline
+```bash
+npm run build
+npm run start
 ```
 
-## Deployment
+Quality checks (same as CI):
 
-### 1. GitHub CI (avtomatik)
+```bash
+npm run lint
+npx tsc --noEmit
+npm run build
+```
 
-Push/PR → `ci.yml` işləyir: lint, TypeScript, production build.
+Optional seed:
 
-### 2. Vercel (canlı)
+```bash
+npm run seed:1000
+```
 
-1. [vercel.com](https://vercel.com) → New Project → GitHub repo
-2. Environment Variables (Production + Preview):
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `JWT_SECRET` (min 32 simvol)
-   - `SUPABASE_SERVICE_ROLE_KEY`
-3. GitHub → Settings → Secrets and variables → Actions:
-   - `VERCEL_TOKEN`
-   - `VERCEL_ORG_ID`
-   - `VERCEL_PROJECT_ID`
+Branch workflow: `develop` (CI only) → `staging` (Vercel preview) → `main` (Vercel production).
 
-`main` → production deploy | `staging` → preview deploy
+Admin access: set `role = admin` for a user in the Supabase `profiles` table.
 
-### 3. Branch strategiyası
+### The Core Team
 
-- `develop` — CI only
-- `staging` — preview deploy
-- `main` — production deploy
+- **Platform:** E-commerce (GreenShop)
+- **Stack:** Next.js 16 · React 19 · Supabase · GitHub Actions · Vercel
 
-## Təhlükəsizlik
-
-- Security headers (CSP, HSTS, X-Frame-Options) — `next.config.ts`
-- JWT httpOnly cookie session
-- Role-based admin access
-- Server-only env ayrımı
-
-## Sənədlər
-
-- `DEPLOYMENT-INSIGHTS.md` — deployment öyrənmə qeydləri
-- `e-commerce.md` — funksional tələblər
-- `supabase/SETUP-AZ.md` — Supabase quraşdırma (AZ)
-
-## Admin
-
-Supabase `profiles` cədvəlində istifadəçinin `role` sütununu `admin` edin.
+<span><i>Made at <a href='https://qwasar.io'>Qwasar SV -- Software Engineering School</a></i></span>
+<span><img alt='Qwasar SV -- Software Engineering School's Logo' src='https://storage.googleapis.com/qwasar-public/qwasar-logo_50x50.png' width='20px' /></span>

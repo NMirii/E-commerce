@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import Providers from "@/components/Providers";
 
@@ -25,6 +27,8 @@ export default function RootLayout({
     <html lang="az" className={`${jakarta.variable} h-full`}>
       <body className="min-h-full flex flex-col antialiased">
         <Providers>{children}</Providers>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
